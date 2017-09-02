@@ -34,7 +34,7 @@
 #ifndef LEGEND_H
 #define LEGEND_H
 
-#include "Plot.h"
+#include "OMPlot.h"
 
 namespace OMPlot
 {
@@ -46,7 +46,7 @@ class Legend : public QwtLegend
   Q_OBJECT
 public:
   Legend(Plot *pParent);
-  ~Legend();
+  bool eventFilter(QObject *object, QEvent *event);
 public slots:
   void showSetupDialog();
   void legendMenu(const QPoint&);
@@ -54,7 +54,10 @@ private:
   Plot *mpPlot;
   PlotCurve *mpPlotCurve;
   QAction *mpSetupAction;
-
+protected:
+  virtual QWidget *createWidget(const QwtLegendData &data) const;
+  virtual void mousePressEvent(QMouseEvent *event);
+  virtual void mouseDoubleClickEvent(QMouseEvent *event);
 };
 }
 

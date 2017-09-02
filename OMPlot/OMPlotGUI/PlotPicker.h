@@ -30,19 +30,24 @@
 /*
  * @author Adeel Asghar <adeel.asghar@liu.se>
  */
-#ifndef SCALEDRAW_H
-#define SCALEDRAW_H
+#ifndef PLOTPICKER_H
+#define PLOTPICKER_H
 
-#include "qwt_scale_draw.h"
+#include "qwt_plot_marker.h"
+#include "OMPlot.h"
 
 namespace OMPlot
 {
-class ScaleDraw : public QwtScaleDraw
+class PlotPicker : public QwtPlotPicker
 {
 public:
-  ScaleDraw();
-  virtual QwtText label(double value) const;
+  PlotPicker(QWidget *pCanvas, Plot *pPlot);
+  bool curveAtPosition(const QPoint pos, PlotCurve *&pPlotCurve, int &index) const;
+  virtual QwtText trackerText(const QPoint &pos) const;
+private:
+  Plot *mpPlot;
+  QwtPlotMarker *mpPointMarker;
 };
 }
 
-#endif // SCALEDRAW_H
+#endif // PLOTPICKER_H

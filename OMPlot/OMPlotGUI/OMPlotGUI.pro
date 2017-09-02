@@ -5,6 +5,9 @@
 #-------------------------------------------------
 
 QT += core gui svg
+greaterThan(QT_MAJOR_VERSION, 4) {
+    QT *= printsupport widgets
+}
 
 TARGET = OMPlot
 TEMPLATE = app
@@ -12,20 +15,21 @@ CONFIG += console
 
 SOURCES += main.cpp
 
-HEADERS += Plot.h \
+HEADERS += OMPlot.h \
     PlotZoomer.h \
     Legend.h \
     PlotPanner.h \
+    PlotPicker.h \
     PlotGrid.h \
-    ScaleDraw.h \
     PlotCurve.h \
     PlotWindow.h \
     PlotApplication.h \
     PlotWindowContainer.h \
-    PlotMainWindow.h
+    PlotMainWindow.h \
+    ScaleDraw.h
 
 win32 {
-  QMAKE_LFLAGS += -enable-auto-import
+  QMAKE_LFLAGS += -Wl,--enable-auto-import
   CONFIG(debug, debug|release){
     LIBS += -L$$(OMBUILDDIR)/lib/omc -lOMPlot -lomqwtd
   }

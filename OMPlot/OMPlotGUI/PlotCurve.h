@@ -34,15 +34,13 @@
 #ifndef PLOTCURVE_H
 #define PLOTCURVE_H
 
-#include "Plot.h"
+#include "OMPlot.h"
 
 namespace OMPlot
 {
 class PlotCurve : public QwtPlotCurve
 {
 private:
-  QwtArray<double> mXAxisVector;
-  QwtArray<double> mYAxisVector;
   QString mName;
   QString mNameStructure;
   QString mFileName;
@@ -50,31 +48,37 @@ private:
   QString mYVariable;
   bool mCustomColor;
   QString mUnit;
+  QString mDisplayUnit;
   qreal mWidth;
   int mStyle;
 
   Plot *mpParentPlot;
 public:
-  PlotCurve(QString fileName, QString variableName, QString unit, Plot *pParent);
+  PlotCurve(QString fileName, QString name, QString xVariableName, QString yVariableName, QString unit, QString displayUnit, Plot *pParent);
   ~PlotCurve();
+
+  QwtArray<double> mXAxisVector;
+  QwtArray<double> mYAxisVector;
 
   void setTitleLocal();
   Qt::PenStyle getPenStyle(int style);
   QwtPlotCurve::CurveStyle getCurveStyle(int style);
   void setUnit(QString unit) {mUnit = unit;}
   QString getUnit() {return mUnit;}
+  void setDisplayUnit(QString displayUnit) {mDisplayUnit = displayUnit;}
+  QString getDisplayUnit() {return mDisplayUnit;}
   void setCurveWidth(qreal width);
   qreal getCurveWidth() {return mWidth;}
   void setCurveStyle(int style);
   int getCurveStyle() {return mStyle;}
   void setXAxisVector(QVector<double> vector);
   void addXAxisValue(double value);
+  void updateXAxisValue(int index, double value);
   const double* getXAxisVector() const;
-  QVector<double> getXAxisData();
   void clearXAxisVector() {mXAxisVector.clear();}
   void setYAxisVector(QVector<double> vector);
-  QVector<double> getYAxisData();
   void addYAxisValue(double value);
+  void updateYAxisValue(int index, double value);
   const double* getYAxisVector() const;
   void clearYAxisVector() {mYAxisVector.clear();}
   int getSize();
@@ -89,10 +93,12 @@ public:
   QString getYVariable();
   void setCustomColor(bool value);
   bool hasCustomColor();
+  void toggleVisibility();
   void setData(const double* xData, const double* yData, int size);
 #if QWT_VERSION < 0x060000
   virtual void updateLegend(QwtLegend *legend) const;
 #endif
+  virtual int closestPoint(const QPoint &pos, double *dist = NULL) const;
 };
 }
 

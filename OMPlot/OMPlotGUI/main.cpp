@@ -31,40 +31,59 @@
  *
  */
 
+#include <QtGlobal>
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+#include <QtWidgets>
+#include <QApplication>
+#else
 #include <QtGui/QApplication>
+#endif
+
+
 #include "PlotMainWindow.h"
 #include "PlotApplication.h"
 
 using namespace OMPlot;
 
 #define CONSUME_BOOL_ARG(i,n,var) { \
-  if (0 == strcmp("true",argv[i]+n)) var = true; \
-  else if (0 == strcmp("false",argv[i]+n)) var = false; \
-  else {fprintf(stderr, "%s does not describe a boolean value\n", argv[i]);} \
+  if (0 == strcmp("true", argv[i]+n)) \
+    var = true; \
+  else if (0 == strcmp("false", argv[i]+n)) \
+    var = false; \
+  else \
+  { \
+    fprintf(stderr, "Error: %s does not describe a boolean value\n", argv[i]); \
+    return 1; \
+  } \
 }
 
-void printUsage()
+void printUsage(bool shortDescription)
 {
-    printf("Usage: OMPlot [OPTIONS] [--filename=NAME] [variable names]\n");
+  printf("Usage: OMPlot [OPTIONS] [variable names]\n");
+  if (shortDescription)
+    printf("       For detailed usage information, use 'OMPlot --help'.\n");
+  else
+  {
     printf("OPTIONS\n");
-    printf("    --title=TITLE              Sets the TITLE of the plot window\n");
+    printf("    --auto-scale=[true|false]  Use auto scale while plotting.\n");
+    printf("    --curve-style=STYLE        Sets the STYLE of the curve. SolidLine=1, DashLine=2, DotLine=3, DashDotLine=4, DashDotDotLine=5, Sticks=6, Steps=7\n");
+    printf("    --curve-width=WIDTH        Sets the WIDTH of the curve\n");
     printf("    --filename=NAME            Sets the NAME of the file to plot\n");
+    printf("    --footer=FOOTER            Sets the FOOTER of the plot window\n");
     printf("    --grid=GRID                Sets the GRID of the plot i.e simple, detailed, none\n");
+    printf("    --legend-position=POSITION Sets the POSITION of the legend i.e left, right, top, bottom, none\n");
     printf("    --logx=[true|false]        Use log scale for the x-axis\n");
     printf("    --logy=[true|false]        Use log scale for the y-axis\n");
-    printf("    --xlabel=LABEL             Use LABEL as the label of the x-axis\n");
-    printf("    --ylabel=LABEL             Use LABEL as the label of the y-axis\n");
+    printf("    --new-window=[true|false]  Create a MDI dialog in the plot-window\n");
     printf("    --plot                     Create a normal plot\n");
     printf("    --plotAll                  Create a normal plot containing every variable in the result-file\n");
     printf("    --plotParametric           Create a parametric plot (plot variables as functions of each other)\n");
+    printf("    --title=TITLE              Sets the TITLE of the plot window\n");
+    printf("    --xlabel=LABEL             Use LABEL as the label of the x-axis\n");
     printf("    --xrange=LEFT:RIGHT        Sets the initial range of the x-axis to LEFT:RIGHT\n");
+    printf("    --ylabel=LABEL             Use LABEL as the label of the y-axis\n");
     printf("    --yrange=LEFT:RIGHT        Sets the initial range of the y-axis to LEFT:RIGHT\n");
-    printf("    --new-window=[true|false]  Create a MDI dialog in the plot-window\n");
-    printf("    --curve-width=WIDTH        Sets the WIDTH of the curve\n");
-    printf("    --curve-style=STYLE        Sets the STYLE of the curve. SolidLine=1, DashLine=2, DotLine=3, DashDotLine=4, DashDotDotLine=5, Sticks=6, Steps=7\n");
-    printf("    --legend-position=POSITION Sets the POSITION of the legend i.e left, right, top, bottom, none\n");
-    printf("    --footer=FOOTER            Sets the FOOTER of the plot window\n");
-    printf("    --auto-scale=[true|false]  Use auto scale while plotting.\n");
+  }
 }
 
 int main(int argc, char *argv[])
@@ -95,7 +114,7 @@ int main(int argc, char *argv[])
         if (strncmp(argv[i], "--filename=", 11) == 0) {
           filename = argv[i]+11;
         } else if (strcmp(argv[i], "--help") == 0) {
-          printUsage();
+          printUsage(false);
           return 1;
         } else if (strncmp(argv[i], "--title=", 8) == 0) {
           title = argv[i]+8;
@@ -150,11 +169,53 @@ int main(int argc, char *argv[])
           vars.append(argv[i]);
         }
     }
+
     if (filename.length() == 0) {
-      fprintf(stderr, "Error: No filename given\n");
-      printUsage();
+      QStringList nameFilter = (QStringList() << "*.mat" << "*.csv");
+
+      QDir directory(".");
+      QStringList resultFiles = directory.entryList(nameFilter);
+      int count = resultFiles.count();
+
+      if(count == 0)
+      {
+        fprintf(stderr, "Error: No filename specified.\n");
+        printUsage(true);
+        return 1;
+      }
+      else if(count == 1)
+      {
+        filename = resultFiles.at(0);
+        fprintf(stdout, "WARN:  No filename specified, so the following filename is assumed:\n       '%s'\n", filename.toUtf8().constData());
+      }
+      else
+      {
+        fprintf(stdout, "Info:  This directory contains following result files:\n");
+        for(int i=0;i<count;i++)
+          fprintf(stdout, "         %d. %s\n", i+1, resultFiles.at(i).toUtf8().constData());
+        fprintf(stdout, "         0. another file\n");
+
+        int choise;
+        fprintf(stdout, "       Make your choice: ");
+        scanf("%d", &choise);
+        if(choise > 0 && choise <= count)
+          filename = resultFiles.at(choise-1);
+        else
+        {
+          if(choise != 0)
+            fprintf(stderr, "Error: Invalid index specified.\n");
+          printUsage(true);
+          return 1;
+        }
+      }
+    }
+
+    if (vars.count() == 0 && plottype != "plotAll") {
+      fprintf(stderr, "Error: No variables specified.\n");
+      printUsage(true);
       return 1;
     }
+
     // Hack to get the expected format of PlotApplication. Yes, this is totally crazy :)
     arguments.append(argv[0]);
     arguments.append(filename);

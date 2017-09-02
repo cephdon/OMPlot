@@ -22,7 +22,14 @@
 #ifndef PLOTWINDOW_H
 #define PLOTWINDOW_H
 
+#include <QtGlobal>
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+#include <QtWidgets>
+#include <QPrinter>
+#include <QPrintDialog>
+#else
 #include <QtGui>
+#endif
 #include <QtCore>
 
 #include <qwt_plot.h>
@@ -42,7 +49,7 @@
 #include <stdexcept>
 #include "util/read_matlab4.h"
 #include "util/read_csv.h"
-#include "Plot.h"
+#include "OMPlot.h"
 
 namespace OMPlot
 {
@@ -53,7 +60,7 @@ class PlotWindow : public QMainWindow
 {
   Q_OBJECT
 public:
-  enum PlotType {PLOT, PLOTALL, PLOTPARAMETRIC};
+  enum PlotType {PLOT, PLOTALL, PLOTPARAMETRIC, PLOTARRAY, PLOTARRAYPARAMETRIC};
 private:
   Plot *mpPlot;
   QCheckBox *mpLogXCheckBox;
@@ -61,8 +68,6 @@ private:
   QToolButton *mpGridButton;
   QToolButton *mpDetailedGridButton;
   QToolButton *mpNoGridButton;
-  QToolButton *mpZoomButton;
-  QToolButton *mpPanButton;
   QToolButton *mpAutoScaleButton;
   QToolButton *mpSetupButton;
   QTextStream *mpTextStream;
@@ -71,12 +76,15 @@ private:
   PlotType mPlotType;
   QString mGridType;
   QString mUnit;
+  QString mDisplayUnit;
+  QString mTimeUnit;
   QString mXRangeMin;
   QString mXRangeMax;
   QString mYRangeMin;
   QString mYRangeMax;
   double mCurveWidth;
   int mCurveStyle;
+  double mTime;
 public:
   PlotWindow(QStringList arguments = QStringList(), QWidget *parent = 0);
   ~PlotWindow();
@@ -87,9 +95,12 @@ public:
   void setPlotType(PlotType type);
   PlotType getPlotType();
   void initializeFile(QString file);
+  void getStartStopTime(double &start, double &stop);
   void setupToolbar();
   void plot(PlotCurve *pPlotCurve = 0);
   void plotParametric(PlotCurve *pPlotCurve = 0);
+  void plotArray(double timePercent, PlotCurve *pPlotCurve = 0);
+  void plotArrayParametric(double timePercent, PlotCurve *pPlotCurve = 0);
   void setTitle(QString title);
   void setGrid(QString grid);
   QString getGrid();
@@ -100,6 +111,10 @@ public:
   void setYLabel(QString label);
   void setUnit(QString unit) {mUnit = unit;}
   QString getUnit() {return mUnit;}
+  void setDisplayUnit(QString displayUnit) {mDisplayUnit = displayUnit;}
+  QString getDisplayUnit() {return mDisplayUnit;}
+  void setTimeUnit(QString timeUnit) {mTimeUnit = timeUnit;}
+  QString getTimeUnit() {return mTimeUnit;}
   void setXRange(double min, double max);
   QString getXRangeMin();
   QString getXRangeMax();
@@ -116,9 +131,11 @@ public:
   QString getFooter();
   void checkForErrors(QStringList variables, QStringList variablesPlotted);
   Plot* getPlot();
-  QToolButton* getPanButton();
   void receiveMessage(QStringList arguments);
   void closeEvent(QCloseEvent *event);
+  void setTime(double time){mTime = time;}
+  double getTime() {return mTime;}
+  void updateTimeText(QString unit);
 signals:
   void closingDown();
 public slots:
@@ -220,6 +237,19 @@ private:
   QWidget *mpLegendTab;
   QLabel *mpLegendPositionLabel;
   QComboBox *mpLegendPositionComboBox;
+  /* range tab */
+  QWidget *mpRangeTab;
+  QCheckBox *mpAutoScaleCheckbox;
+  QGroupBox *mpXAxisGroupBox;
+  QLabel *mpXMinimumLabel;
+  QLineEdit *mpXMinimumTextBox;
+  QLabel *mpXMaximumLabel;
+  QLineEdit *mpXMaximumTextBox;
+  QGroupBox *mpYAxisGroupBox;
+  QLabel *mpYMinimumLabel;
+  QLineEdit *mpYMinimumTextBox;
+  QLabel *mpYMaximumLabel;
+  QLineEdit *mpYMaximumTextBox;
   /* buttons */
   QPushButton *mpOkButton;
   QPushButton *mpApplyButton;
@@ -231,6 +261,7 @@ public:
   void setupPlotCurve(VariablePageWidget *pVariablePageWidget);
 public slots:
   void variableSelected(QListWidgetItem *current, QListWidgetItem *previous);
+  void autoScaleChecked(bool checked);
   void saveSetup();
   void applySetup();
 };
